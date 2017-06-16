@@ -1,0 +1,243 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="bower_components/iron-autogrow-textarea/iron-autogrow-textarea.html">
+
+<link rel="import" href="bower_components/vaadin-icons/vaadin-icons.html">
+
+<!--TODO implement cmacc-->
+<!--TODO implement ms word like "feeling" revision control with balloons and everything, or something just as natural-->
+
+
+<dom-module id="cmacc-editor-text-input">
+  <template class="layout vertical">
+
+    <style>
+      :host {
+
+        display: block;
+
+      }
+
+
+
+      --iron-autogrow-textarea {
+
+        width:100%;
+        border:0px;
+      }
+
+      iron-autogrow-textarea {
+        width:100%;
+        border:0px;
+      }
+
+      table {
+        width:100%;
+      }
+
+      tr {
+        width:100%;
+      }
+
+      .side {
+        width:1%;
+        background: var(--side-bar-color);
+      }
+      .main {
+        width:79%;
+      }
+      .options {
+        width:20%
+
+      }
+
+
+    </style>
+
+
+    <table>
+      <tr>
+        <td class="side"><p> </p></td>
+        <td class="main">
+            <iron-autogrow-textarea readonly="{{lock}}"  value="{{legalText}}"></iron-autogrow-textarea>
+        </td>
+        <td class="options">
+
+
+          <template is="dom-if" if="{{lock}}">
+            <iron-icon on-click="_lock" icon="vaadin:lock"></iron-icon>
+          </template>
+          <template is="dom-if" if="{{!lock}}">
+            <iron-icon on-click="_lock" icon="vaadin:unlock"></iron-icon>
+          </template>
+
+          <template is="dom-if" if="{{bookmark}}">
+            <iron-icon on-click="_bookmark" icon="vaadin:bookmark"></iron-icon>
+          </template>
+          <template is="dom-if" if="{{!bookmark}}">
+            <iron-icon on-click="_bookmark" icon="vaadin:bookmark-o"></iron-icon>
+          </template>
+
+          <template is="dom-if" if="{{undo}}">
+            <iron-icon on-click="_undo" icon="vaadin:arrow-backward"></iron-icon>
+            <iron-icon on-click="_upload" icon="vaadin:upload-alt"></iron-icon>
+          </template>
+
+
+        </td>
+      </tr>
+    </table>
+
+    <template is="dom-if" if="{{mergeConflict}}">
+      <h6>Alternate Version</h6>
+      <iron-autogrow-textarea readonly value="{{checkValue}}"></iron-autogrow-textarea>
+
+      <br>
+      <br>
+      <div>
+        <button on-click="_accept">accept my changes</button>
+        <button on-click="_undo">delete my changes</button>
+      </div>
+    </template>
+
+    <!--TODO make it so that one item is shown at the time and by clicking next we are going back in history. put the stupid icon somewhere better-->
+    <iron-icon on-click="_showHistory" icon="vaadin:archives"></iron-icon>
+    <template is="dom-if" if="{{showHistory}}">
+      <template is="dom-repeat" items="{{commits}}">
+        <iron-autogrow-textarea readonly value="{{item.commit}}"></iron-autogrow-textarea>
+        <p>{{item.name}} {{item.date}}</p>
+      </template>
+    </template>
+
+
+
+
+
+
+
+  </template>
+
+  <script>
+    /**
+     * `cmacc-editor-text-input`
+     * 
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class CmaccEditorTextInput extends Polymer.Element {
+      static get is() { return 'cmacc-editor-text-input'; }
+      static get properties() {
+        return {
+          legalText: {
+            type: String,
+            value: 'an arbitrary amount of text. whatever you like.',
+              observer:'_valueChanged'
+          },
+            checkValue: {
+                value: 'an arbitrary amount of text. whatever you like.',
+
+            },
+            undo: {
+              type: Boolean,
+                value:false
+            },
+
+            lock: {
+              type: Boolean,
+                value:false
+            },
+
+            bookmark: {
+              type: Boolean,
+                value:false
+            },
+            showHistory:{
+              type: Boolean,
+                value:false
+            },
+            commits:{
+              type:Array,
+              value: [{
+                  name:'axel',
+                  date:'16-06-2017',
+                  commit:'a previous commit'
+
+              }]
+            }
+
+        }
+
+      }
+
+
+      ready(){
+          super.ready();
+          if(this.lock) {
+              this._lock()
+          }
+          if(this.bookmark){
+              this._bookmark()
+          }
+          this.checkValue= this.legalText
+
+      }
+
+      _valueChanged(){
+        if(this.checkValue !== this.legalText){
+
+            this.updateStyles({
+                '--side-bar-color':'lawngreen'
+            })
+
+            this.undo = true;
+        } else {
+            this.updateStyles({
+                '--side-bar-color':'white'
+            })
+
+            this.undo = false
+        }
+      }
+
+      _lock(){
+          this.lock = !this.lock;
+
+      }
+
+
+      _undo(){
+
+          this.legalText = this.checkValue;
+          this.mergeConflict = false;
+
+      }
+
+      _upload(){
+          this.mergeConflict = true;
+      }
+
+      _bookmark(){
+          this.bookmark = !this.bookmark;
+      }
+
+      _accept(){
+
+          this.mergeConflict = false;
+          this.checkValue = this.legalText
+          this._valueChanged()
+      }
+
+      _showHistory() {
+          this.showHistory = !this.showHistory
+          if(this.showHistory){
+
+          }
+      }
+
+
+    }
+
+    window.customElements.define(CmaccEditorTextInput.is, CmaccEditorTextInput);
+  </script>
+</dom-module>
